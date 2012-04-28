@@ -1,9 +1,9 @@
 import random
 import physics 
 
-def randomwalk(ant, food):
+def randomwalk(self, food):
     turning_angle = random.gauss(0, 0.3)
-    ant.move(turning_angle, 5)
+    self.move(turning_angle, 5)
     physics.checkstatus1(ant)
     
     if ant.alive == False: #Temporary setting: If it dies then stop the simulation
