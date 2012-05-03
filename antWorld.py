@@ -33,7 +33,7 @@ ant1.randomize_position(newland)
 food1.randomize_position(newland)
 antImg = pygame.image.load(ant1.imagename)
 foodImg = pygame.image.load(food1.imagename)
-
+#test
 #World Simulation Start
 
 while True: # the main game loop
