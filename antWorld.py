@@ -1,9 +1,9 @@
 import pygame, sys
-from pygame.locals import *
+from pygame.locals import QUIT
 import life
 import land
 import worldtimecycle
-from math import *
+from math import pi
 
 
 def rot_center(filename, angle):
@@ -27,8 +27,8 @@ pygame.display.set_caption('antWorld')
 
 iWHITE = (250, 250, 250)
 
-ant1 = life.ants()
-food1 = life.antfood()
+ant1 = life.Ant()
+food1 = life.Food()
 ant1.randomize_position(newland)
 food1.randomize_position(newland)
 antImg = pygame.image.load(ant1.imagename)
