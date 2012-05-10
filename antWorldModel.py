@@ -1,4 +1,4 @@
-from life import Ant, Food
+from life import Ant, Food, Land
 from math import sqrt
 class AntWorld:
     '''
@@ -9,7 +9,7 @@ class AntWorld:
         self.width = width
         self.length = length
         self.land = Land(width, length)
-        self.ants = [Ant(self.land) for i in range(self.numOfAnts)]
+        self.ants = [Ant(self.land) for i in range(numOfAnts)]
         self.food = Food(self.land)
          
     def run(self):
@@ -18,16 +18,13 @@ class AntWorld:
             self.checkBoundary(ant)
         
     def checkSuccess(self):
-        for ant in self.ants:
-            if self.getDistance(ant, self.food)<10:
-                return True
+#        for ant in self.ants:
+#            if self.getDistance(ant, self.food)<10:
+#                return True
         return False
     
     def getFoodPosition(self):
         return (self.food.x, self.food.y)
-    
-    def getAntPosition(self, ant):
-        return (ant.x, ant.y)
     
     def getDistance(self, lifea, lifeb):
         return sqrt((lifea.x-lifeb.x)**2+(lifea.y-lifeb.y)**2)
@@ -43,7 +40,3 @@ class AntWorld:
         elif(ant.y<=5):
             ant.y = 794    
 
-class Land:
-    def __init__(self, length, width):
-        self.length = length
-        self.width = width

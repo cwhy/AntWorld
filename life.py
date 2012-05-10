@@ -1,14 +1,12 @@
 import random
 from math import *
 
-
 class Life:
     def __init__(self, land):
         self.x = 0
         self.y = 0
         self.land = land
 
-            
 class Ant(Life):
     def __init__(self, land):
         Life.__init__(self, land)
@@ -44,4 +42,9 @@ class Food(Life):
     def __init__(self, land):
         Life.__init__(self, land)
         self.x, self.y = 400, 400
+
+class Land:
+    def __init__(self, length, width):
+        self.length = length
+        self.width = width
         
