@@ -13,10 +13,14 @@ def rot_center(filename, angle):
     rot_image = rot_image.subsurface(rot_rect).copy()
     return rot_image
 
+def drawAnts(ant):
+    antImg = rot_center('ant.png', -ant.facingAngle/2/pi*360) 
+    DISPLAYSURF.blit(antImg, (ant.x, ant.y))
+   
 #Initialization
 pygame.init()
 fpsClock = pygame.time.Clock() #setup clock
-antWorld = AntWorld() # game model
+antWorld = AntWorld(10, 800,800) # game model
 FPS = 30 # frames per second setting
 iWHITE = (250, 250, 250) # background color
 
@@ -30,9 +34,8 @@ foodImg = pygame.image.load('food.png')
 #World Simulation Start
 while not antWorld.checkSuccess(): # the main game loop
     DISPLAYSURF.fill(iWHITE)
-    DISPLAYSURF.blit(foodImg, antWorld.getFoodPosition())  
-    antImg = rot_center('ant.png', -antWorld.ant.facingAngle/2/pi*360) 
-    display = DISPLAYSURF.blit(antImg, antWorld.getAntPosition())   
+    DISPLAYSURF.blit(foodImg, antWorld.getFoodPosition())
+    map(drawAnts, antWorld.ants)  
     
     antWorld.run()
     
@@ -40,7 +43,6 @@ while not antWorld.checkSuccess(): # the main game loop
         if event.type == QUIT:
             pygame.quit()
             sys.exit()
-    
     pygame.display.update()
     fpsClock.tick(FPS)
     

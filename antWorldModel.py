@@ -9,37 +9,39 @@ class AntWorld:
         self.width = width
         self.length = length
         self.land = Land(width, length)
-        self.ant = Ant(self.land)
+        self.ants = [Ant(self.land) for i in range(self.numOfAnts)]
         self.food = Food(self.land)
          
     def run(self):
-        self.ant.walk()
-        self.checkBoundary()
+        for ant in self.ants:
+            ant.walk()
+            self.checkBoundary(ant)
         
     def checkSuccess(self):
-        if self.getDistance(self.ant, self.food)<10:
-            return True
+        for ant in self.ants:
+            if self.getDistance(ant, self.food)<10:
+                return True
         return False
     
     def getFoodPosition(self):
         return (self.food.x, self.food.y)
     
-    def getAntPosition(self):
-        return (self.ant.x, self.ant.y)
+    def getAntPosition(self, ant):
+        return (ant.x, ant.y)
     
     def getDistance(self, lifea, lifeb):
         return sqrt((lifea.x-lifeb.x)**2+(lifea.y-lifeb.y)**2)
     
-    def checkBoundary(self):
+    def checkBoundary(self, ant):
         #Rule 1 Touch wall = cross    
-        if (self.ant.x>=794):
-            self.ant.x = 5
-        elif(self.ant.y>=794):
-            self.ant.y = 5
-        elif(self.ant.x<=5):
-            self.ant.x = 794
-        elif(self.ant.y<=5):
-            self.ant.y = 794    
+        if (ant.x>=794):
+            ant.x = 5
+        elif(ant.y>=794):
+            ant.y = 5
+        elif(ant.x<=5):
+            ant.x = 794
+        elif(ant.y<=5):
+            ant.y = 794    
 
 class Land:
     def __init__(self, length, width):
