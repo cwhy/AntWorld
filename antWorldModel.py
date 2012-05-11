@@ -31,12 +31,12 @@ class AntWorld:
     
     def checkBoundary(self, ant):
         #Rule 1 Touch wall = cross    
-        if (ant.x>=794):
-            ant.x = 5
-        elif(ant.y>=794):
-            ant.y = 5
-        elif(ant.x<=5):
-            ant.x = 794
-        elif(ant.y<=5):
-            ant.y = 794    
+        if (ant.x >= self.width):
+            ant.x = 0
+        elif(ant.y >= self.length):
+            ant.y = 0
+        elif(ant.x <= 0):
+            ant.x = self.width
+        elif(ant.y <= 0):
+            ant.y = self.length    
 

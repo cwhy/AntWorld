@@ -13,31 +13,40 @@ def rot_center(filename, angle):
     rot_image = rot_image.subsurface(rot_rect).copy()
     return rot_image
 
+def drawLandUpdate(ant):
+	'''refresh the part of the background that ant went pass'''
+	for x in range(int(ant.x)-5, int(ant.x)+33):
+		for y in range(int(ant.y)-5, int(ant.y)+33):
+			e = antWorld.land.element[x%antWorld.length][y%antWorld.width]
+			SURFACE.set_at((e.x, e.y), e.color)
+
 def drawAnts(ant):
     antImg = rot_center('ant.png', -ant.facingAngle/2/pi*360) 
-    DISPLAYSURF.blit(antImg, (ant.x, ant.y))
+    SURFACE.blit(antImg, (ant.x, ant.y))
    
 #Initialization
 pygame.init()
 fpsClock = pygame.time.Clock() #setup clock
-antWorld = AntWorld(100, 800,800) # game model
+antWorld = AntWorld(4, 800,800) # game model
 FPS = 30 # frames per second setting
 iWHITE = (250, 250, 250) # background color
 
 # set up the window
-DISPLAYSURF = pygame.display.set_mode((antWorld.length, antWorld.width), 0, 32)
+SURFACE = pygame.display.set_mode((antWorld.length, antWorld.width), 0, 32)
 pygame.display.set_caption('antWorld')
+SURFACE.fill(iWHITE)
 
 # load image resources
 foodImg = pygame.image.load('food.png')
 
 #World Simulation Start
 while not antWorld.checkSuccess(): # the main game loop
-    DISPLAYSURF.fill(iWHITE)
-    DISPLAYSURF.blit(foodImg, antWorld.getFoodPosition())
-    map(drawAnts, antWorld.ants)  
+#   SURFACE.fill(iWHITE)
     
     antWorld.run()
+    map(drawLandUpdate, antWorld.ants)  
+    SURFACE.blit(foodImg, antWorld.getFoodPosition())
+    map(drawAnts, antWorld.ants)  
     
     for event in pygame.event.get():
         if event.type == QUIT:
