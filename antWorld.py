@@ -1,5 +1,5 @@
 import pygame, sys
-from antWorldModel import AntWorld
+from worldModel import AntWorld
 from math import pi
 from pygame.locals import QUIT
 
