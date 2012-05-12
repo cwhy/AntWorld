@@ -43,8 +43,23 @@ class Food(Life):
         Life.__init__(self, land)
         self.x, self.y = 400, 400
 
+class LandElement:
+    '''all kinds of infomation in land'''
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        self.antSignal = 0 # the tracing signal of ants
+        self.color = (200 + int(random.random() * 55), 200 + int(random.random() * 55), 
+                      200 + int(random.random() * 55)) # Used for testing
+
 class Land:
     def __init__(self, length, width):
         self.length = length
         self.width = width
-        
+        self.element = []
+        for x in range(0,length):
+            column = []
+            for y in range(0,width):
+                column.append(LandElement(x, y))
+            self.element.append(column)
+
