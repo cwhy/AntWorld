@@ -1,5 +1,5 @@
 import random
-from math import *
+from math import pi, cos, sin
 
 class Life:
     def __init__(self, land):

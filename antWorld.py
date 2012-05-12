@@ -20,7 +20,7 @@ def drawAnts(ant):
 #Initialization
 pygame.init()
 fpsClock = pygame.time.Clock() #setup clock
-antWorld = AntWorld(100, 800,800) # game model
+antWorld = AntWorld(10, 800,800) # game model
 FPS = 30 # frames per second setting
 iWHITE = (250, 250, 250) # background color
 
