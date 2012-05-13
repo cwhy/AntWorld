@@ -69,7 +69,7 @@ class Ant(Life):
     def leaveSignal(self):
         '''leave traces after walking'''
         element = self.getLandElement()
-        element.gainSignal(500)
+        element.gainSignal(100)
         element.diffuseSignal()
 
     def getSight(self):
