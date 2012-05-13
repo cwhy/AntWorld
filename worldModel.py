@@ -11,11 +11,11 @@ class AntWorld:
         self.land = Land(width, length)
         self.ants = [Ant(self.land) for i in range(numOfAnts)]
         self.food = Food(self.land)
-         
     def run(self):
         for ant in self.ants:
             ant.walk()
             self.checkBoundary(ant)
+            ant.leaveSignal()
         
     def checkSuccess(self):
         for ant in self.ants:
