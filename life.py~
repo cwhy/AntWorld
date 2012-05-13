@@ -40,7 +40,7 @@ class Ant(Life):
 
     def setSignal(self, antWorld):
 	'''leave a smell on the land element'''
-	antWorld.land.element[int(self.x)][int(self.y)].smell[0] = 100
+	antWorld.land.element[int(self.x)][int(self.y)].smell = 100
 
     def advancedWalk(self,antWorld):
         a=a

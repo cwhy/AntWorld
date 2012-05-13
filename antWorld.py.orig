@@ -1,4 +1,3 @@
-import random
 import pygame, sys
 from worldModel import AntWorld
 from math import pi
@@ -14,28 +13,25 @@ def rot_center(filename, angle):
     rot_image = rot_image.subsurface(rot_rect).copy()
     return rot_image
 
-def getLandColor(landElement, RANDOM = False):
-	if RANDOM == True:
-	        return (200 + int(random.random() * 55), 200 + int(random.random() * 55), 200 + int(random.random() * 55)) 
-	else:
-		return (250 -int((landElement.smell[0]/100)*250), 250, 250) 
-
-
 def drawLandUpdate(ant):
     '''refresh the part of the background that ant went pass'''
-    for x in range(int(ant.x)-20, int(ant.x)+20):
-        for y in range(int(ant.y)-20, int(ant.y)+20):
+    for x in range(int(ant.x)-5, int(ant.x)+33):
+        for y in range(int(ant.y)-5, int(ant.y)+33):
             e = antWorld.land.element[x%antWorld.length][y%antWorld.width]
-            SURFACE.set_at((e.x, e.y), getLandColor(e))
+            SURFACE.set_at((e.x, e.y), e.color)
 
 def drawAnts(ant):
     antImg = rot_center('ant.png', -ant.facingAngle/2/pi*360) 
-    SURFACE.blit(antImg, (ant.x - 15, ant.y - 15))
+    SURFACE.blit(antImg, (ant.x, ant.y))
    
 #Initialization
 pygame.init()
 fpsClock = pygame.time.Clock() #setup clock
-antWorld = AntWorld(10, 700,700) # game model
+<<<<<<< HEAD
+antWorld = AntWorld(14, 800,800) # game model
+=======
+antWorld = AntWorld(30, 800,800) # game model
+>>>>>>> 1dfdce7db5243d8c2acf60195f851edf354843b1
 FPS = 30 # frames per second setting
 iWHITE = (250, 250, 250) # background color
 
