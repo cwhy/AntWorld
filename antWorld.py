@@ -1,3 +1,4 @@
+import random
 import pygame, sys
 from worldModel import AntWorld
 from math import pi
@@ -13,16 +14,25 @@ def rot_center(filename, angle):
     rot_image = rot_image.subsurface(rot_rect).copy()
     return rot_image
 
+def getLandColor(landElement, RANDOM=False):
+    if RANDOM == True:
+        return (200 + int(random.random() * 55), 200 + int(random.random() * 55), 200 + int(random.random() * 55)) 
+    else:
+        red = 250 - int((landElement.antSignal / 100) * 250)
+        green = 250 - int((landElement.antSignal / 100) * 100)
+        blue = 250 - int((landElement.antSignal / 100) * 100)
+        return (red, green, blue) 
+
 def drawLandUpdate(ant):
     '''refresh the part of the background that ant went pass'''
-    for x in range(int(ant.x)-5, int(ant.x)+33):
-        for y in range(int(ant.y)-5, int(ant.y)+33):
+    for x in range(int(ant.x) - 20, int(ant.x) + 20):
+        for y in range(int(ant.y) - 20, int(ant.y) + 20):
             e = antWorld.land.element[x % antWorld.length][y % antWorld.width]
-            SURFACE.set_at((e.x, e.y), e.color)
+            SURFACE.set_at((e.x, e.y), getLandColor(e))
 
 def drawAnts(ant):
-    antImg = rot_center('ant.png', -ant.facingAngle/2/pi*360) 
-    SURFACE.blit(antImg, (ant.x, ant.y))
+    antImg = rot_center('ant.png', -ant.facingAngle / 2 / pi * 360) 
+    SURFACE.blit(antImg, (ant.x - 15, ant.y - 15))
    
 #Initialization
 pygame.init()
@@ -44,7 +54,7 @@ SURFACE.blit(foodImg, antWorld.getFoodPosition())
 while not antWorld.checkSuccess(): # the main game loop
 
     antWorld.run()
-    map(drawLandUpdate, antWorld.ants)    
+    map(drawLandUpdate, antWorld.ants)  
     SURFACE.blit(foodImg, antWorld.getFoodPosition())
     map(drawAnts, antWorld.ants)
     

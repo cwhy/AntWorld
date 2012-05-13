@@ -78,7 +78,7 @@ class Ant(Life):
         x = self.x + s*cos(self.facingAngle)
         y = self.y + s*sin(self.facingAngle)
         return self.land.getAdjacentElements(x, y)
-    
+
 class Food(Life):
     def __init__(self, land):
         Life.__init__(self, land)
@@ -91,7 +91,6 @@ class LandElement:
         self.x = x
         self.y = y
         self.antSignal = 0 # the tracing signal of ants
-        self.color = (200, 200, 200) # Used for testing
     
     def getAdjacentElements(self):
         return self.land.getAdjacentElements(self.x, self.y)
@@ -111,7 +110,6 @@ class LandElement:
     def gainSignal(self, amount = 100):    
         self.antSignal += amount
     
-
 class Land:
     def __init__(self, length, width):
         self.length = length

@@ -1,10 +1,10 @@
 from life import Ant, Food, Land
-from math import sqrt
+from math import sqrt, pi
 class AntWorld:
     '''
     It contains the World Model
     '''
-    def __init__(self, numOfAnts = 1, width = 800, length = 800):
+    def __init__(self, numOfAnts=1, width=800, length=800):
         self.numOfAnts = numOfAnts
         self.width = width
         self.length = length
@@ -19,7 +19,7 @@ class AntWorld:
         
     def checkSuccess(self):
         for ant in self.ants:
-            if self.getDistance(ant, self.food)<10:
+            if self.getDistance(ant, self.food) < 15:
                 return True
         return False
     
@@ -27,16 +27,28 @@ class AntWorld:
         return (self.food.x, self.food.y)
     
     def getDistance(self, lifea, lifeb):
-        return sqrt((lifea.x-lifeb.x)**2+(lifea.y-lifeb.y)**2)
+        return sqrt((lifea.x - lifeb.x) ** 2 + (lifea.y - lifeb.y) ** 2)
     
-    def checkBoundary(self, ant):
-        #Rule 1 Touch wall = cross    
-        if (ant.x >= self.width):
-            ant.x = 0
-        elif(ant.y >= self.length):
-            ant.y = 0
-        elif(ant.x <= 0):
-            ant.x = self.width
-        elif(ant.y <= 0):
-            ant.y = self.length    
-
+    def checkBoundary(self, ant, bounce=False):
+        if (bounce == True):
+            #Rule 1 Touch wall = bounce back like light
+            if (int(ant.x) >= self.width - 1):
+                ant.facingAngle = -ant.facingAngle - pi
+                ant.x = self.width - 1
+            elif (int(ant.x) <= 0):
+                ant.facingAngle = -ant.facingAngle - pi
+                ant.x = 0
+            
+            elif (int(ant.y) >= self.length - 1):
+                ant.facingAngle = -ant.facingAngle
+                ant.y = self.length - 1
+            
+            elif (int(ant.y) <= 0):
+                ant.facingAngle = -ant.facingAngle
+                ant.y = 0
+            ant.facingAngle %= 2 * pi
+        else:
+            #Rule 2 Touch wall = cross
+            ant.x %= self.width
+            ant.y %= self.length
+            
