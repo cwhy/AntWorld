@@ -18,7 +18,10 @@ def getLandColor(landElement, RANDOM = False):
 	if RANDOM == True:
 	        return (200 + int(random.random() * 55), 200 + int(random.random() * 55), 200 + int(random.random() * 55)) 
 	else:
-		return (250 -int((landElement.smell[0]/100)*250), 250, 250) 
+		red = 250 -int((landElement.smell[0]/100)*250)
+		green = 250-int((landElement.smell[0]/100)*100)
+		blue = 250-int((landElement.smell[0]/100)*100)
+		return ( red, green, blue ) 
 
 
 def drawLandUpdate(ant):
