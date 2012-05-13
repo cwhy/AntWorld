@@ -18,9 +18,9 @@ class AntWorld:
             self.checkBoundary(ant)
         
     def checkSuccess(self):
-#        for ant in self.ants:
-#            if self.getDistance(ant, self.food)<10:
-#                return True
+        for ant in self.ants:
+            if self.getDistance(ant, self.food)<10:
+                return True
         return False
     
     def getFoodPosition(self):

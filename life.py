@@ -1,5 +1,5 @@
 import random
-from math import *
+from math import pi, cos, sin
 
 class Life:
     def __init__(self, land):
@@ -44,12 +44,13 @@ class Food(Life):
         self.x, self.y = 400, 400
 
 class LandElement:
-	'''all kinds of infomation in land'''
-	def __init__(self, x, y):
-		self.x = x
-		self.y = y
-		self.antSignal = 0 # the tracing signal of ants
-		self.color = (200+int(random.random() * 55), 200+int(random.random() * 55), 200+int(random.random() * 55))# Used for testing
+    '''all kinds of infomation in land'''
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        self.antSignal = 0 # the tracing signal of ants
+        self.color = (200 + int(random.random() * 55), 200 + int(random.random() * 55), 
+                      200 + int(random.random() * 55)) # Used for testing
 
 class Land:
     def __init__(self, length, width):
