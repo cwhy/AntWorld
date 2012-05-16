@@ -53,6 +53,7 @@ SURFACE.fill(iWHITE)
 foodImg = pygame.image.load('food.png')
 SURFACE.blit(foodImg, antWorld.getFoodPosition())
 
+
 #World Simulation Start
 while not antWorld.checkSuccess(): # the main game loop
 
