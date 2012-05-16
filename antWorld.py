@@ -30,7 +30,7 @@ def drawLandUpdate(ant):
     '''refresh the part of the background that ant went pass'''
     for x in range(int(ant.x) - 20, int(ant.x) + 20):
         for y in range(int(ant.y) - 20, int(ant.y) + 20):
-            e = antWorld.land.element[x % antWorld.length][y % antWorld.width]
+            e = antWorld.land.element[x % antWorld.land.length][y % antWorld.land.width]
             SURFACE.set_at((e.x, e.y), getLandColor(e))
 
 def drawAnts(ant):
@@ -45,21 +45,20 @@ FPS = 30 # frames per second setting
 iWHITE = (250, 250, 250) # background color
 
 # set up the window
-SURFACE = pygame.display.set_mode((antWorld.length, antWorld.width), 0, 32)
+SURFACE = pygame.display.set_mode((antWorld.land.length, antWorld.land.width), 0, 32)
 pygame.display.set_caption('antWorld')
 SURFACE.fill(iWHITE)
 
 # load image resources
 foodImg = pygame.image.load('food.png')
-SURFACE.blit(foodImg, antWorld.getFoodPosition())
+SURFACE.blit(foodImg, antWorld.food.getPosition())
 
 
 #World Simulation Start
 while not antWorld.checkSuccess(): # the main game loop
 
-    antWorld.run()
-    map(drawLandUpdate, antWorld.ants)  
-    SURFACE.blit(foodImg, antWorld.getFoodPosition())
+    antWorld.run() 
+    SURFACE.blit(foodImg, antWorld.food.getPosition())
     map(drawAnts, antWorld.ants)
     
     for event in pygame.event.get():
@@ -67,7 +66,7 @@ while not antWorld.checkSuccess(): # the main game loop
             pygame.quit()
             sys.exit()
     pygame.display.update()
+    map(drawLandUpdate, antWorld.ants) 
     fpsClock.tick(FPS)
-    
 pygame.quit()
 sys.exit()
