@@ -1,10 +1,10 @@
 import random
-from math import pi, cos, sin, atan
+from math import pi, cos, sin, sqrt
 
 class Life:
-    def __init__(self, land):
-        self.x = 0
-        self.y = 0
+    def __init__(self, land, x=0, y=0):
+        self.x = x
+        self.y = y
         self.land = land
         
     def getLandElement(self):
@@ -14,19 +14,17 @@ class Ant(Life):
     def __init__(self, land):
         Life.__init__(self, land)
         self.facingAngle = 0
+
+        self.home = land.element[0][0]
+        self.searchMode = True #For patrol testing
+        self.hasFood = False
+        
+        self.speed = 8
+        self.viewRange = pi*5/6
+        self.viewMaxDistance = 50
         self.signalSensitivity = 20
         # Right direction is 0, anticlockwise positive
         
-    def walk(self):
-        '''random walk with step length 5 and random parameter 0.3'''
-        if not self.detectSignal():
-            self.randomWalk()
-        
-    def randomWalk(self):
-        '''this is internal walking mechanism of ants which is supposed not exposed to user'''
-        turning_angle = random.gauss(0, 0.3)
-        self.move(turning_angle, 5)
-    
     def move(self, turn, forward):
         '''
         Function: used to turn ant and move the ant forward
@@ -46,25 +44,60 @@ class Ant(Life):
         self.x = x
         self.y = y
         self.facingAngle = facingAngle
-
+        print "angle", self.facingAngle/pi*180
+        
+    def randomWalk(self):
+        '''this is internal walking mechanism of ants which is supposed not exposed to user'''
+        turning_angle = random.gauss(0, 0.2)
+        self.move(turning_angle, self.speed)
+        
     def detectSignal(self):
-        '''return true if signal detected in adjacent elements and move towards the signal'''
-        sight = self.getSight()
-        for element in sight:
-            if element.antSignal > self.signalSensitivity:
-                x, y = element.x, element.y
-                if x-self.x == 0 and y-self.y < 0:
-                    self.facingAngle = 3*pi/2
-                elif x-self.x == 0 and y-self.y > 0:
-                    self.facingAngle = pi/2
-                elif x-self.x < 0:
-                    self.facingAngle = atan((y-self.y) / (x-self.x)) + pi
-                else:
-                    self.facingAngle = atan((y-self.y) / (x-self.x))
-                self.move(0, 1)
-                print "Detect!"
-                return True
-        return False
+        '''return the angle of the signal of the strongest direction'''
+        sideAngle = int((0.5 * self.viewRange) * self.viewMaxDistance)# viewResolution = 1 / self.viewMaxDistance theta is about actan(theta) when theta is small
+        maxAngle = self.facingAngle
+        maxSignal = 0
+        for a in range(-sideAngle, sideAngle):
+            for distance in range(0, self.viewMaxDistance):
+                x = sin(a) * distance
+                y = cos(a) * distance
+                s = self.land.getElement(x, y).antSignal          
+                if s > maxSignal:
+                    maxSignal = s
+                    maxAngle = a
+        if maxSignal <= 10:
+            return None
+        else:
+            print "signal",maxSignal
+            return maxAngle
+        
+    def followSignal(self):
+        '''follow the signal...'''
+        if self.detectSignal() != None:
+            turning_angle = self.detectSignal() - self.facingAngle
+            self.move(turning_angle, self.speed)
+            print "following!"
+        else:
+            print "still no signal..."
+            self.randomWalk()
+            
+    def patrol(self):
+        if (not self.hasFood) and self.land.getDistanceAB(self, self.land.food) < 100:#Turn back
+            self.facingAngle = (pi + self.facingAngle) % (2*pi)
+            self.searchMode = False
+            self.hasFood = True
+            self.followSignal()
+            print "Found! Turing back"
+        elif self.hasFood and self.land.getDistanceAB(self, self.home) < 100: #Go to food again
+            self.facingAngle = (pi + self.facingAngle) % (2*pi)
+            self.hasFood = False
+            self.followSignal()
+        else:
+            if  self.searchMode: #Find food
+                self.randomWalk()
+            else:
+                self.followSignal()
+            
+            
         
     def leaveSignal(self):
         '''leave traces after walking'''
@@ -72,26 +105,22 @@ class Ant(Life):
         element.gainSignal(100)
         element.diffuseSignal()
 
-    def getSight(self):
-        '''get landElements in the sight'''
-        s = 2
-        x = self.x + s*cos(self.facingAngle)
-        y = self.y + s*sin(self.facingAngle)
-        return self.land.getAdjacentElements(x, y)
-
 class Food(Life):
     def __init__(self, land):
         Life.__init__(self, land)
         self.x, self.y = 400, 400
+    def getPosition(self):
+        return (self.x, self.y)
 
 class LandElement:
-    '''all kinds of infomation in land'''
+    '''all kinds of information in land'''
     def __init__(self, land, x, y):
         self.land = land
         self.x = x
         self.y = y
         self.antSignal = 0 # the tracing signal of ants
-    
+        
+        
     def getAdjacentElements(self):
         return self.land.getAdjacentElements(self.x, self.y)
     
@@ -104,14 +133,14 @@ class LandElement:
             amount = self.antSignal * diffuseRatio / len(adjacent)
             if amount >= diffuseThreshold:
                 element.gainSignal(amount)
-                self.gainSignal(-amount)
+                self.gainSignal(-amount-10)
                 element.diffuseSignal()
 
     def gainSignal(self, amount = 100):    
         self.antSignal += amount
     
 class Land:
-    def __init__(self, length, width):
+    def __init__(self, width,length):
         self.length = length
         self.width = width
         self.element = []
@@ -121,9 +150,12 @@ class Land:
                 column.append(LandElement(self, x, y))
             self.element.append(column)
             
+    def getDistanceAB(self, A, B):
+        return sqrt((A.x - B.x) ** 2 + (A.y - B.y) ** 2)
+    
     def getElement(self, x, y):
         '''getLandElement at x, y, (x, y need not to be integer)'''
-        return self.element[int(x) % self.width][int(y) % self.length]
+        return self.element[int(x)][int(y)]
     
     def getAdjacentElements(self, x, y):
         s = 2 # size of adjacent
