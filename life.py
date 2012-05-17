@@ -1,5 +1,5 @@
 import random
-from math import pi, cos, sin, sqrt
+from math import pi, cos, sin, sqrt, exp
 
 class Life:
     def __init__(self, land, x=0, y=0):
@@ -58,13 +58,16 @@ class Ant(Life):
         maxSignal = 0
         for a in range(-sideAngle, sideAngle):
             for distance in range(0, self.viewMaxDistance):
-                x = sin(a) * distance
-                y = cos(a) * distance
-                s = self.land.getElement(x, y).antSignal          
-                if s > maxSignal:
-                    maxSignal = s
-                    maxAngle = a
-        if maxSignal <= 10:
+                x = self.x + sin(a) * distance
+                y = self.y + cos(a) * distance
+                e = self.land.getElement(x, y)
+                s = 0 #signal
+                if e != None:#not out of boundary
+                    s += e.getSignal(self.land.time)       
+            if s > maxSignal:
+                maxSignal = s
+                maxAngle = a
+        if maxSignal <= 1:
             return None
         else:
             print "signal",maxSignal
@@ -97,13 +100,11 @@ class Ant(Life):
             else:
                 self.followSignal()
             
-            
         
-    def leaveSignal(self):
+    def leaveSignal(self,time):
         '''leave traces after walking'''
         element = self.getLandElement()
-        element.gainSignal(100)
-        element.diffuseSignal()
+        element.gainSignal(time)
 
 class Food(Life):
     def __init__(self, land):
@@ -118,26 +119,33 @@ class LandElement:
         self.land = land
         self.x = x
         self.y = y
-        self.antSignal = 0 # the tracing signal of ants
+        self.antSignal = [0,0] # the tracing signal of ants, time of signal
         
         
-    def getAdjacentElements(self):
-        return self.land.getAdjacentElements(self.x, self.y)
+    def signalDecay(self,dtime):
+        a = 0.1
+        b = 0
+        print dtime, "bfo",self.antSignal[0],"aft:", int((exp(-a * dtime) + b) * self.antSignal[0])  
+        return int((exp(-a * dtime) + b) * self.antSignal[0])    
     
-    def diffuseSignal(self):
-        diffuseRatio = 0.1
-        diffuseThreshold = 2
-        
-        adjacent = self.getAdjacentElements()
-        for element in adjacent:
-            amount = self.antSignal * diffuseRatio / len(adjacent)
-            if amount >= diffuseThreshold:
-                element.gainSignal(amount)
-                self.gainSignal(-amount-10)
-                element.diffuseSignal()
+    
+    def getSignal(self,time):
+        if self.antSignal[1] == 0:
+            return 0
+        else:
+            print time, self.antSignal[1]
+            return self.signalDecay(time - self.antSignal[1])
 
-    def gainSignal(self, amount = 100):    
-        self.antSignal += amount
+    
+
+    def gainSignal(self, time, amount = 100):
+        if self.antSignal[1] == 0:
+            self.antSignal[0] += amount
+            self.antSignal[1] = time
+        else:
+            self.antSignal[0] = self.signalDecay(time - self.antSignal[1])
+            self.antSignal[0] = amount / 2 + self.antSignal[0] / 2
+            self.antSignal[1] = time
     
 class Land:
     def __init__(self, width,length):
@@ -155,13 +163,8 @@ class Land:
     
     def getElement(self, x, y):
         '''getLandElement at x, y, (x, y need not to be integer)'''
-        return self.element[int(x)][int(y)]
+        if x >= 0 and y >= 0 and x <= self.width - 1 and y <= self.length - 1:
+            return self.element[int(x)][int(y)]
+        else:
+            return None
     
-    def getAdjacentElements(self, x, y):
-        s = 2 # size of adjacent
-        adjacent = []
-        for i in range(int(x-s), int(x+s)):
-            for j in range(int(y-s), int(y+s)):
-                if i != x or j != y:
-                    adjacent.append(self.getElement(i % self.width, j % self.length))
-        return adjacent

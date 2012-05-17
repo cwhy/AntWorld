@@ -5,10 +5,12 @@ class AntWorld:
     It contains the World Model
     '''
     def __init__(self, numOfAnts=1, width=800, length=800):
+        self.time = 0
         self.numOfAnts = numOfAnts
         self.land = Land(width, length)
         self.land.ants = [Ant(self.land) for i in range(numOfAnts)]
         self.land.food = Food(self.land)
+        self.land.time = self.time
         self.ants = self.land.ants
         self.food = self.land.food
         
@@ -16,7 +18,9 @@ class AntWorld:
         for ant in self.ants:
             ant.patrol()
             self.checkBoundary(ant, True)
-            ant.leaveSignal()
+            ant.leaveSignal(self.time)
+        self.time += 1
+        self.land.time = self.time
         
     def checkSuccess(self):
  #       for ant in self.ants:
