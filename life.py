@@ -1,5 +1,5 @@
 import random
-from math import pi, cos, sin, sqrt, exp
+from math import pi, cos, sin, sqrt, exp, fabs
 
 class Life:
     def __init__(self, land, x=0, y=0):
@@ -8,7 +8,12 @@ class Life:
         self.land = land
         
     def getLandElement(self):
-        return self.land.getElement(self.x, self.y)
+        element = self.land.getElement(self.x, self.y)
+        if element == None:
+            print self.x, self.y
+            raise "???"
+        else:
+            return element
 
 class Ant(Life):
     def __init__(self, land):
@@ -19,8 +24,8 @@ class Ant(Life):
         self.searchMode = True #For patrol testing
         self.hasFood = False
         
-        self.speed = 8
-        self.viewRange = pi
+        self.speed = 5
+        self.viewRange = 2*pi
         self.viewMaxDistance = 50
         self.signalSensitivity = 20
         # Right direction is 0, anticlockwise positive
@@ -46,7 +51,7 @@ class Ant(Life):
         self.facingAngle = facingAngle
         print "angle", self.facingAngle/pi*180
         
-    def randomWalk(self,randomness=0.2):
+    def randomWalk(self,randomness=0.15):
         '''this is internal walking mechanism of ants which is supposed not exposed to user'''
         turning_angle = random.gauss(0, randomness)
         self.move(turning_angle, self.speed)
@@ -69,25 +74,20 @@ class Ant(Life):
             #print "signal",maxSignal, "angle", maxAngle
             return maxAngle
     
-    def detectSignal2(self):
-        '''return the angle of the signal of the strongest direction'''
-        centerism = 0.5 #the degree of the tendency of going straight 
+    def detectSignalC(self):
+        '''return the angle of a strong signal in front of the ant '''
+        centerism = 1.5 # MAX 2 The tendency of going forward, the larger the more centered
         sideAngle = int((0.5 * self.viewRange) * self.viewMaxDistance)# viewResolution = 1 / self.viewMaxDistance theta is about actan(theta) when theta is small
         maxAngle = self.facingAngle
         maxSignal = 0
         for a in range(-sideAngle, sideAngle):
-            s = 0 #signal
-            for distance in range(1, self.viewMaxDistance):
-                angle = float(a)/self.viewMaxDistance + self.facingAngle
-                x = self.x + cos(angle) * distance
-                y = self.y + sin(angle) * distance
-                e = self.land.getElement(x, y)
-                if e != None:#not out of boundary
-                    s += float(e.getSignal(self.land.time))/(0.3 * distance + a * centerism + 1)
-            if s > maxSignal:
-                maxSignal = s
+            angle = float(a)/self.viewMaxDistance + self.facingAngle
+            signal = self.land.getElement(self.x, self.y).getSignalByAngle(angle, self.viewMaxDistance)
+            signal *= 1 - centerism * fabs(a)/sideAngle
+            if signal > maxSignal:
+                maxSignal = signal
                 maxAngle = angle
-            print angle, s
+            print angle, signal
         if maxSignal <= 0.1:
             return None
         else:
@@ -96,8 +96,9 @@ class Ant(Life):
         
     def followSignal(self):
         '''follow the signal...'''
-        if self.detectSignal() != None:
-            turning_angle = self.detectSignal() - self.facingAngle
+        preferedSignal = self.detectSignalC()
+        if  preferedSignal != None:
+            turning_angle = preferedSignal - self.facingAngle
             self.move(turning_angle, self.speed)
             print "following!"
         else:
@@ -105,6 +106,7 @@ class Ant(Life):
             #self.randomWalk(0.1)
             
     def patrol(self):
+        '''The algorithm to let the ant patrol'''
         if (not self.hasFood) and self.land.getDistanceAB(self, self.land.food) < 100:#Turn back
             self.facingAngle = (pi + self.facingAngle) % (2*pi)
             self.searchMode = False
@@ -123,10 +125,10 @@ class Ant(Life):
                 print self.hasFood
             
         
-    def leaveSignal(self,time):
+    def leaveSignal(self):
         '''leave traces after walking'''
         element = self.getLandElement()
-        element.gainSignal(time)
+        element.gainSignal()
 
 class Food(Life):
     def __init__(self, land):
@@ -150,7 +152,7 @@ class LandElement:
         
         dtime = float(time - self.antSignal[1])
         #    if self.antSignal[0] != 0:
-#       #    print dtime, "bfo",self.antSignal[0],"aft:", int((exp(-a * dtime) + b) * self.antSignal[0])  
+        #print dtime, "bfo",self.antSignal[0],"aft:", int((exp(-a * dtime) + b) * self.antSignal[0])  
         return (exp(-a * (dtime)) + b) * self.antSignal[0]    
     
     
@@ -163,15 +165,15 @@ class LandElement:
 
     def getSignalByAngle(self,angle,maxDistance = 50):#50 is almost the max signal because if far the signal will be weak
         signalByAngle = 0.0
-        for distance in range(1, maxDistance):
+        for distance in range(2, maxDistance):
             x = self.x + cos(angle) * distance
             y = self.y + sin(angle) * distance
             e = self.land.getElement(x, y)
             if e != None:#not out of boundary
-                signalByAngle += e.getSignal()/(0.3 * distance + 1)
+                signalByAngle += e.getSignal()/(0.01 * distance + 1)
         return signalByAngle
 
-    def gainSignal(self, amount = 100):
+    def gainSignal(self, amount = 100.0):
             self.antSignal[0] = amount + self.getSignal()
             self.antSignal[1] = self.land.time
     
@@ -191,8 +193,12 @@ class Land:
     
     def getElement(self, x, y):
         '''getLandElement at x, y, (x, y need not to be integer)'''
-        if int(x) >= 0 and int(y) >= 0 and int(x) <= self.width - 1 and int(y) <= self.length - 1:
-            return self.element[int(x)][int(y)]
+        if self.bounce == True:
+            if int(x) >= 0 and int(y) >= 0 and int(x) <= self.width - 1 and int(y) <= self.length - 1:
+                return self.element[int(x)][int(y)]
+            else:
+                #print x, y, int(x), int(y)
+                return None
         else:
-            return None
+            return self.element[int(x)%self.width][int(y)%self.length]
     

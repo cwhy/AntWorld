@@ -32,7 +32,7 @@ def drawLandUpdate(ant):
     refreshRange = 20 #Min 20 for the ant picture
     for x in range(int(ant.x) - refreshRange, int(ant.x) + refreshRange):
         for y in range(int(ant.y) - refreshRange, int(ant.y) + refreshRange):
-            e = antWorld.land.element[x % antWorld.land.length][y % antWorld.land.width]
+            e = antWorld.land.getElement(x,y)
             SURFACE.set_at((e.x, e.y), getLandColor(e))
 
 def drawAnts(ant):
@@ -42,7 +42,7 @@ def drawAnts(ant):
 #Initialisation
 pygame.init()
 fpsClock = pygame.time.Clock() #setup clock
-antWorld = AntWorld(1, 800, 800) # game model
+antWorld = AntWorld(1, 700, 700) # game model
 FPS = 30 # frames per second setting
 iWHITE = (250, 250, 250) # background color
 
