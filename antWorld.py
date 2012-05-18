@@ -18,9 +18,10 @@ def getLandColor(landElement, RANDOM=False):
     if RANDOM == True:
         return (200 + int(random.random() * 55), 200 + int(random.random() * 55), 200 + int(random.random() * 55)) 
     else:
-        s = landElement.antSignal[0]
+        s = landElement.getSignal()
+
         if  s > 100:
-            s = 100
+            s = 100.0
         red = 250 - int((s / 100) * 250 )
         green = 250 - int((s / 100) * 50)
         blue = 250 - int((s / 100) * 50)
@@ -28,8 +29,9 @@ def getLandColor(landElement, RANDOM=False):
 
 def drawLandUpdate(ant):
     '''refresh the part of the background that ant went pass'''
-    for x in range(int(ant.x) - 20, int(ant.x) + 20):
-        for y in range(int(ant.y) - 20, int(ant.y) + 20):
+    refreshRange = 20 #Min 20 for the ant picture
+    for x in range(int(ant.x) - refreshRange, int(ant.x) + refreshRange):
+        for y in range(int(ant.y) - refreshRange, int(ant.y) + refreshRange):
             e = antWorld.land.element[x % antWorld.land.length][y % antWorld.land.width]
             SURFACE.set_at((e.x, e.y), getLandColor(e))
 
@@ -37,7 +39,7 @@ def drawAnts(ant):
     antImg = rot_center('ant.png', -ant.facingAngle / 2 / pi * 360) 
     SURFACE.blit(antImg, (ant.x - 15, ant.y - 15))
    
-#Initialization
+#Initialisation
 pygame.init()
 fpsClock = pygame.time.Clock() #setup clock
 antWorld = AntWorld(1, 800, 800) # game model

@@ -20,7 +20,7 @@ class Ant(Life):
         self.hasFood = False
         
         self.speed = 8
-        self.viewRange = pi*5/6
+        self.viewRange = pi
         self.viewMaxDistance = 50
         self.signalSensitivity = 20
         # Right direction is 0, anticlockwise positive
@@ -46,9 +46,9 @@ class Ant(Life):
         self.facingAngle = facingAngle
         print "angle", self.facingAngle/pi*180
         
-    def randomWalk(self):
+    def randomWalk(self,randomness=0.2):
         '''this is internal walking mechanism of ants which is supposed not exposed to user'''
-        turning_angle = random.gauss(0, 0.2)
+        turning_angle = random.gauss(0, randomness)
         self.move(turning_angle, self.speed)
         
     def detectSignal(self):
@@ -57,20 +57,41 @@ class Ant(Life):
         maxAngle = self.facingAngle
         maxSignal = 0
         for a in range(-sideAngle, sideAngle):
-            for distance in range(0, self.viewMaxDistance):
-                x = self.x + sin(a) * distance
-                y = self.y + cos(a) * distance
-                e = self.land.getElement(x, y)
-                s = 0 #signal
-                if e != None:#not out of boundary
-                    s += e.getSignal(self.land.time)       
-            if s > maxSignal:
-                maxSignal = s
-                maxAngle = a
-        if maxSignal <= 1:
+            angle = float(a)/self.viewMaxDistance + self.facingAngle
+            signal = self.land.getElement(self.x, self.y).getSignalByAngle(angle, self.viewMaxDistance)
+            if signal > maxSignal:
+                maxSignal = signal
+                maxAngle = angle
+            print angle, signal
+        if maxSignal <= 0.1:
             return None
         else:
-            print "signal",maxSignal
+            #print "signal",maxSignal, "angle", maxAngle
+            return maxAngle
+    
+    def detectSignal2(self):
+        '''return the angle of the signal of the strongest direction'''
+        centerism = 0.5 #the degree of the tendency of going straight 
+        sideAngle = int((0.5 * self.viewRange) * self.viewMaxDistance)# viewResolution = 1 / self.viewMaxDistance theta is about actan(theta) when theta is small
+        maxAngle = self.facingAngle
+        maxSignal = 0
+        for a in range(-sideAngle, sideAngle):
+            s = 0 #signal
+            for distance in range(1, self.viewMaxDistance):
+                angle = float(a)/self.viewMaxDistance + self.facingAngle
+                x = self.x + cos(angle) * distance
+                y = self.y + sin(angle) * distance
+                e = self.land.getElement(x, y)
+                if e != None:#not out of boundary
+                    s += float(e.getSignal(self.land.time))/(0.3 * distance + a * centerism + 1)
+            if s > maxSignal:
+                maxSignal = s
+                maxAngle = angle
+            print angle, s
+        if maxSignal <= 0.1:
+            return None
+        else:
+            #print "signal",maxSignal, "angle", maxAngle
             return maxAngle
         
     def followSignal(self):
@@ -80,8 +101,8 @@ class Ant(Life):
             self.move(turning_angle, self.speed)
             print "following!"
         else:
-            print "still no signal..."
-            self.randomWalk()
+            print "No signal..."
+            #self.randomWalk(0.1)
             
     def patrol(self):
         if (not self.hasFood) and self.land.getDistanceAB(self, self.land.food) < 100:#Turn back
@@ -99,6 +120,7 @@ class Ant(Life):
                 self.randomWalk()
             else:
                 self.followSignal()
+                print self.hasFood
             
         
     def leaveSignal(self,time):
@@ -119,33 +141,39 @@ class LandElement:
         self.land = land
         self.x = x
         self.y = y
-        self.antSignal = [0,0] # the tracing signal of ants, time of signal
+        self.antSignal = [0.0,0] # the tracing signal of ants, time of signal
         
         
-    def signalDecay(self,dtime):
-        a = 0.1
-        b = 0
-        print dtime, "bfo",self.antSignal[0],"aft:", int((exp(-a * dtime) + b) * self.antSignal[0])  
-        return int((exp(-a * dtime) + b) * self.antSignal[0])    
+    def calcDecayedSignal(self,time):
+        a = 0.005 #Larger -> faster
+        b = 0.0
+        
+        dtime = float(time - self.antSignal[1])
+        #    if self.antSignal[0] != 0:
+#       #    print dtime, "bfo",self.antSignal[0],"aft:", int((exp(-a * dtime) + b) * self.antSignal[0])  
+        return (exp(-a * (dtime)) + b) * self.antSignal[0]    
     
     
-    def getSignal(self,time):
-        if self.antSignal[1] == 0:
+    def getSignal(self):
+        if self.antSignal[1] == 0: #No time records of signal
             return 0
         else:
-            print time, self.antSignal[1]
-            return self.signalDecay(time - self.antSignal[1])
+            #print time, self.antSignal[1]
+            return self.calcDecayedSignal(self.land.time)
 
-    
+    def getSignalByAngle(self,angle,maxDistance = 50):#50 is almost the max signal because if far the signal will be weak
+        signalByAngle = 0.0
+        for distance in range(1, maxDistance):
+            x = self.x + cos(angle) * distance
+            y = self.y + sin(angle) * distance
+            e = self.land.getElement(x, y)
+            if e != None:#not out of boundary
+                signalByAngle += e.getSignal()/(0.3 * distance + 1)
+        return signalByAngle
 
-    def gainSignal(self, time, amount = 100):
-        if self.antSignal[1] == 0:
-            self.antSignal[0] += amount
-            self.antSignal[1] = time
-        else:
-            self.antSignal[0] = self.signalDecay(time - self.antSignal[1])
-            self.antSignal[0] = amount / 2 + self.antSignal[0] / 2
-            self.antSignal[1] = time
+    def gainSignal(self, amount = 100):
+            self.antSignal[0] = amount + self.getSignal()
+            self.antSignal[1] = self.land.time
     
 class Land:
     def __init__(self, width,length):
@@ -163,7 +191,7 @@ class Land:
     
     def getElement(self, x, y):
         '''getLandElement at x, y, (x, y need not to be integer)'''
-        if x >= 0 and y >= 0 and x <= self.width - 1 and y <= self.length - 1:
+        if int(x) >= 0 and int(y) >= 0 and int(x) <= self.width - 1 and int(y) <= self.length - 1:
             return self.element[int(x)][int(y)]
         else:
             return None
