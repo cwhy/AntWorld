@@ -24,9 +24,9 @@ class Ant(Life):
         self.searchMode = True #For patrol testing
         self.hasFood = False
         
-        self.speed = 5
+        self.speed = 8
         self.viewRange = 2*pi
-        self.viewMaxDistance = 50
+        self.viewMaxDistance = 30
         self.signalSensitivity = 20
         # Right direction is 0, anticlockwise positive
         
@@ -49,7 +49,7 @@ class Ant(Life):
         self.x = x
         self.y = y
         self.facingAngle = facingAngle
-        print "angle", self.facingAngle/pi*180
+        #print "angle", self.facingAngle/pi*180
         
     def randomWalk(self,randomness=0.15):
         '''this is internal walking mechanism of ants which is supposed not exposed to user'''
@@ -67,7 +67,7 @@ class Ant(Life):
             if signal > maxSignal:
                 maxSignal = signal
                 maxAngle = angle
-            print angle, signal
+            #print angle, signal
         if maxSignal <= 0.1:
             return None
         else:
@@ -76,7 +76,7 @@ class Ant(Life):
     
     def detectSignalC(self):
         '''return the angle of a strong signal in front of the ant '''
-        centerism = 1.5 # MAX 2 The tendency of going forward, the larger the more centered
+        centerism = 1.0 # MAX 2 The tendency of going forward, the larger the more centered
         sideAngle = int((0.5 * self.viewRange) * self.viewMaxDistance)# viewResolution = 1 / self.viewMaxDistance theta is about actan(theta) when theta is small
         maxAngle = self.facingAngle
         maxSignal = 0
@@ -107,13 +107,13 @@ class Ant(Life):
             
     def patrol(self):
         '''The algorithm to let the ant patrol'''
-        if (not self.hasFood) and self.land.getDistanceAB(self, self.land.food) < 100:#Turn back
+        if (not self.hasFood) and self.land.getDistanceAB(self, self.land.food) < 20:#Turn back
             self.facingAngle = (pi + self.facingAngle) % (2*pi)
             self.searchMode = False
             self.hasFood = True
             self.followSignal()
             print "Found! Turing back"
-        elif self.hasFood and self.land.getDistanceAB(self, self.home) < 100: #Go to food again
+        elif self.hasFood and self.land.getDistanceAB(self, self.home) < 5: #Go to food again
             self.facingAngle = (pi + self.facingAngle) % (2*pi)
             self.hasFood = False
             self.followSignal()
