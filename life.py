@@ -1,3 +1,7 @@
+# !usr/bin/python
+# Edited by
+# Updated on
+
 import random
 from math import pi, cos, sin, sqrt, exp, fabs
 
