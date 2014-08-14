@@ -6,3 +6,4 @@ pics
 .settings
 *.project
 *.pydevproject
+.*.swp

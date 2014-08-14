@@ -1,8 +1,12 @@
 import random
-import pygame, sys
+import pygame
+import sys
 from worldModel import AntWorld
 from math import pi
 from pygame.locals import QUIT
+#from multiprocessing import Pool
+from concurrent.futures import ThreadPoolExecutor
+
 
 def rot_center(filename, angle):
     """rotate an image while keeping its center and size"""
@@ -14,37 +18,44 @@ def rot_center(filename, angle):
     rot_image = rot_image.subsurface(rot_rect).copy()
     return rot_image
 
+
 def getLandColor(landElement, RANDOM=False):
-    if RANDOM == True:
-        return (200 + int(random.random() * 55), 200 + int(random.random() * 55), 200 + int(random.random() * 55)) 
+    if RANDOM:
+        return (200 + int(random.random() * 55),
+                200 + int(random.random() * 55),
+                200 + int(random.random() * 55))
     else:
         s = landElement.getSignal()
 
-        if  s > 100:
+        if s > 100:
             s = 100.0
-        red = 250 - int((s / 100) * 250 )
+        red = 250 - int((s / 100) * 250)
         green = 250 - int((s / 100) * 50)
         blue = 250 - int((s / 100) * 50)
-        return (red, green, blue) 
+        return (red, green, blue)
+
 
 def drawLandUpdate(ant):
     '''refresh the part of the background that ant went pass'''
-    refreshRange = 20 #Min 20 for the ant picture
+    refreshRange = 20  # Min 20 for the ant picture
     for x in range(int(ant.x) - refreshRange, int(ant.x) + refreshRange):
         for y in range(int(ant.y) - refreshRange, int(ant.y) + refreshRange):
             e = antWorld.land.getElement(x,y)
             SURFACE.set_at((e.x, e.y), getLandColor(e))
 
+
 def drawAnts(ant):
-    antImg = rot_center('ant.png', -ant.facingAngle / 2 / pi * 360) 
+    antImg = rot_center('ant.png', -ant.facingAngle / 2 / pi * 360)
     SURFACE.blit(antImg, (ant.x - 15, ant.y - 15))
-   
+
 #Initialisation
+# pool = Pool(5)
+pool = ThreadPoolExecutor(3)
 pygame.init()
-fpsClock = pygame.time.Clock() #setup clock
-antWorld = AntWorld(6, 700, 700) # game model
-FPS = 30 # frames per second setting
-iWHITE = (250, 250, 250) # background color
+fpsClock = pygame.time.Clock()  # setup clock
+antWorld = AntWorld(6, 700, 700)  # game model
+FPS = 30  # frames per second setting
+iWHITE = (250, 250, 250)  # background color
 
 # set up the window
 SURFACE = pygame.display.set_mode((antWorld.land.length, antWorld.land.width), 0, 32)
@@ -57,18 +68,21 @@ SURFACE.blit(foodImg, antWorld.food.getPosition())
 
 
 #World Simulation Start
-while not antWorld.checkSuccess(): # the main game loop
+while not antWorld.checkSuccess():  # the main game loop
 
-    antWorld.run() 
+    antWorld.run()
+    for ant in antWorld.ants:
+        pool.submit(ant)
+
     SURFACE.blit(foodImg, antWorld.food.getPosition())
     map(drawAnts, antWorld.ants)
-    
+
     for event in pygame.event.get():
         if event.type == QUIT:
             pygame.quit()
             sys.exit()
     pygame.display.update()
-    map(drawLandUpdate, antWorld.ants) 
+    map(drawLandUpdate, antWorld.ants)
     fpsClock.tick(FPS)
 pygame.quit()
 sys.exit()
