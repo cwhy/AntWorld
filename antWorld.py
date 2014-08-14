@@ -1,4 +1,3 @@
-import random
 import pygame
 import sys
 from worldModel import AntWorld
@@ -19,29 +18,13 @@ def rot_center(filename, angle):
     return rot_image
 
 
-def getLandColor(landElement, RANDOM=False):
-    if RANDOM:
-        return (200 + int(random.random() * 55),
-                200 + int(random.random() * 55),
-                200 + int(random.random() * 55))
-    else:
-        s = landElement.getSignal()
-
-        if s > 100:
-            s = 100.0
-        red = 250 - int((s / 100) * 250)
-        green = 250 - int((s / 100) * 50)
-        blue = 250 - int((s / 100) * 50)
-        return (red, green, blue)
-
-
-def drawLandUpdate(ant):
-    '''refresh the part of the background that ant went pass'''
-    refreshRange = 20  # Min 20 for the ant picture
-    for x in range(int(ant.x) - refreshRange, int(ant.x) + refreshRange):
-        for y in range(int(ant.y) - refreshRange, int(ant.y) + refreshRange):
-            e = antWorld.land.getElement(x,y)
-            SURFACE.set_at((e.x, e.y), getLandColor(e))
+#def drawLandUpdate(ant):
+#    '''refresh the part of the background that ant went pass'''
+#    refreshRange = 20  # Min 20 for the ant picture
+#    for x in range(int(ant.x) - refreshRange, int(ant.x) + refreshRange):
+#        for y in range(int(ant.y) - refreshRange, int(ant.y) + refreshRange):
+#            e = antWorld.land.getElement(x,y)
+#            SURFACE.set_at((e.x, e.y), getLandColor(e))
 
 
 def drawAnts(ant):
@@ -53,14 +36,13 @@ def drawAnts(ant):
 pool = ThreadPoolExecutor(3)
 pygame.init()
 fpsClock = pygame.time.Clock()  # setup clock
-antWorld = AntWorld(6, 700, 700)  # game model
-FPS = 30  # frames per second setting
-iWHITE = (250, 250, 250)  # background color
+antWorld = AntWorld(6, 400, 400)  # game model
+FPS = 10  # frames per second setting
 
 # set up the window
 SURFACE = pygame.display.set_mode((antWorld.land.length, antWorld.land.width), 0, 32)
 pygame.display.set_caption('antWorld')
-SURFACE.fill(iWHITE)
+SURFACE.fill(antWorld.land.bgColor)
 
 # load image resources
 foodImg = pygame.image.load('food.png')
@@ -73,6 +55,7 @@ while not antWorld.checkSuccess():  # the main game loop
     antWorld.run()
     for ant in antWorld.ants:
         pool.submit(ant)
+        # ant()
 
     SURFACE.blit(foodImg, antWorld.food.getPosition())
     map(drawAnts, antWorld.ants)
@@ -82,7 +65,14 @@ while not antWorld.checkSuccess():  # the main game loop
             pygame.quit()
             sys.exit()
     pygame.display.update()
-    map(drawLandUpdate, antWorld.ants)
+    # map(drawLandUpdate, antWorld.ants)
+#     for _x in range(antWorld.land.width):
+#         for _y in range(antWorld.land.length):
+#             if antWorld.land.signal['Ant'][_x,_y,1] != 0:
+#                 print _x, _y
+#                 SURFACE.set_at((_x, _y), antWorld.land.getColorP(_x,_y))
+    print antWorld.land.time
+    pygame.surfarray.blit_array(SURFACE, antWorld.land.getColorAll())
     fpsClock.tick(FPS)
 pygame.quit()
 sys.exit()

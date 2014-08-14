@@ -8,7 +8,8 @@ class AntWorld:
     def __init__(self, numOfAnts=1, width=800, length=800):
         self.time = 0
         self.numOfAnts = numOfAnts
-        self.land = Land(width, length)
+        bgColor = (250, 250, 250)  # background color
+        self.land = Land(width, length, bgColor)
         self.land.ants = [Ant(self.land) for i in range(numOfAnts)]
         self.land.food = Food(self.land)
         self.land.time = self.time
