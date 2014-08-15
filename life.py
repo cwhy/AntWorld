@@ -4,7 +4,7 @@
 
 from __future__ import division
 import random
-from math import pi, cos, sin, sqrt, exp, fabs
+from math import pi, cos, sin, sqrt, fabs
 import numpy as np
 import colorsys
 
@@ -25,14 +25,20 @@ class LandElement(object):
     def getSignal(self, signalType):
         return self.land.getSignalP(self.x, self.y, signalType)
 
-    def getSignalByAngle(self, signalType, angle, maxDistance=50):
-        # 50 is almost the max signal because if far the signal will be weak
+    def getSignalByAngle(self, signalType, angle, maxDistance):
         signalByAngle = 0.0
-        for distance in range(2, maxDistance):
-            x = self.x + cos(angle) * distance
-            y = self.y + sin(angle) * distance
-            if x < self.land.width - 1 and x > 0 and y < self.land.length - 1 and y > 0:
-                signalByAngle += self.land.getSignalP(x, y, signalType)/(0.01 * distance + 1)
+        _distance = np.array(range(2, maxDistance))
+        X = self.x + cos(angle) * _distance
+        Y = self.y + sin(angle) * _distance
+        _cond = (X < self.land.width - 1) * (X > 0) * (Y < self.land.length - 1) * (Y > 0)
+        X = X[_cond]
+        Y = Y[_cond]
+        _distance = _distance[_cond]
+        _getSignalXY = np.vectorize(self.land.getSignalP)
+        if len(_distance) == 0:
+            return 0
+        else:
+            signalByAngle = np.sum(_getSignalXY(X, Y, signalType)/(0.01 * _distance + 1))
         return signalByAngle
 
     def updateSignal(self, signalType, amount=0):
@@ -149,7 +155,7 @@ class Ant(Animal):
         if maxSignal <= 0.1:
             return None
         else:
-            #print "signal",maxSignal, "angle", maxAngle
+            #print "signal", maxSignal, "angle", maxAngle
             return maxAngle
 
     def followSignal(self):
@@ -208,10 +214,10 @@ class Land:
         self.signal[signalType] = np.zeros((self.width, self.length, 2))
 
     def getSignalP(self, x, y, signalType):
-        a = 0.005  # Larger -> faster
+        a = 0.01  # Larger -> faster
         b = 0.0
         dtime = float(self.time - self.signal[signalType][x, y, 1])
-        _decaycoef = exp(-a * (dtime)) + b
+        _decaycoef = np.exp(-a * (dtime)) + b
         return _decaycoef * self.signal[signalType][x, y, 0]
 
     def getColorP(self, x, y):  # get the color of point x, y
@@ -268,7 +274,7 @@ class Land:
             self.color[:,:,i] = 255*k[i][:,:]
 
     def getSignalB(self, X, Y, signalType):
-        a = 0.005  # Larger -> faster
+        a = 0.01  # Larger -> faster
         b = 0.0
         dtime = self.time - self.signal[signalType][np.ix_(X,Y,[1])]
         _decaycoef = np.exp(-a * (dtime)) + b
