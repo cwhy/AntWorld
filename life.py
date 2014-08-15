@@ -7,6 +7,7 @@ import random
 from math import pi, cos, sin, sqrt, fabs
 import numpy as np
 import colorsys
+from skimage.color import hsv2rgb
 
 
 class LandElement(object):
@@ -26,20 +27,21 @@ class LandElement(object):
         return self.land.getSignalP(self.x, self.y, signalType)
 
     def getSignalByAngle(self, signalType, angle, maxDistance):
-        signalByAngle = 0.0
         _distance = np.array(range(2, maxDistance))
-        X = self.x + cos(angle) * _distance
-        Y = self.y + sin(angle) * _distance
+        X = (self.x + cos(angle) * _distance).astype(np.uint16, copy=False)
+        Y = (self.y + sin(angle) * _distance).astype(np.uint16, copy=False)
         _cond = (X < self.land.width - 1) * (X > 0) * (Y < self.land.length - 1) * (Y > 0)
         X = X[_cond]
         Y = Y[_cond]
         _distance = _distance[_cond]
-        _getSignalXY = np.vectorize(self.land.getSignalP)
+
+        # _getSignalXY = np.vectorize(self.land.getSignalP)
         if len(_distance) == 0:
             return 0
         else:
-            signalByAngle = np.sum(_getSignalXY(X, Y, signalType)/(0.01 * _distance + 1))
-        return signalByAngle
+            # _idx = np.ix_(X,Y,[0])
+            return np.sum(self.land.getSignalB(X, Y, signalType)/(0.01 * _distance + 1))
+            # signalByAngle = np.sum(_getSignalXY(X, Y, signalType)/(0.01 * _distance + 1))
 
     def updateSignal(self, signalType, amount=0):
         _x = self.x
@@ -214,20 +216,10 @@ class Land:
         self.signal[signalType] = np.zeros((self.width, self.length, 2))
 
     def getSignalP(self, x, y, signalType):
-        a = 0.01  # Larger -> faster
-        b = 0.0
-        dtime = float(self.time - self.signal[signalType][x, y, 1])
-        _decaycoef = np.exp(-a * (dtime)) + b
-        return _decaycoef * self.signal[signalType][x, y, 0]
+        return self.signal[signalType][x, y, 0]
 
     def getColorP(self, x, y):  # get the color of point x, y
-        self.updateColorP(x, y)
         return self.color[x,y,:]
-
-    def getColorB(self, X, Y):  # get the color of block X, Y
-        self.updateColorB(X, Y)
-        C = self.color[np.ix_(X,Y)]
-        return C
 
     def getColorAll(self):  # get the color of block X, Y
         self.updateColorAll()
@@ -243,46 +235,32 @@ class Land:
         _mainColor = 255*colorsys.hsv_to_rgb(h, s, v)
         self.color[x,y,:] = _mainColor
 
-    def updateColorB(self, X, Y):
-        _Vs = list()
-        Min = np.vectorize(min)
-        for signalType in self.signalColors.keys():
-            # _h = self.signalColors[signalType]
-            _Vs.append(Min(self.getSignalB(X,Y,signalType), 100)/100)
-        V = sum(_Vs)
-        blockRGB = np.vectorize(colorsys.hsv_to_rgb)
-        k = 255*blockRGB(0.5, 0.5, V)
-        self.color[:,:,0] = k[0][:,:]
-        self.color[:,:,1] = k[1][:,:]
-        self.color[:,:,2] = k[2][:,:]
-
     def updateColorAll(self):
         _Vs = list()
-        Min = np.vectorize(min)
         for signalType in self.signalColors.keys():
-            # _h = self.signalColors[signalType]
-            _Vs.append(Min(self.getSignalAll(signalType), 100)/100)
+            _v = self.signal[signalType][:,:,0]
+            _v[_v > 100] = 100
+            _Vs.append(_v/100)
         V = sum(_Vs)
         S = np.ones(V.shape)
         S[V == 0] = 0
         H = np.ones(V.shape)
         H[V == 0] = 0.5
         V = 1 - V
-        blockRGB = np.vectorize(colorsys.hsv_to_rgb)
-        k = blockRGB(H, S, V)
-        for i in range(3):
-            self.color[:,:,i] = 255*k[i][:,:]
+        HSV = np.dstack((H, S, V))
+        self.color = 255*hsv2rgb(HSV).astype(np.uint8, copy=False)
 
-    def getSignalB(self, X, Y, signalType):
-        a = 0.01  # Larger -> faster
-        b = 0.0
-        dtime = self.time - self.signal[signalType][np.ix_(X,Y,[1])]
-        _decaycoef = np.exp(-a * (dtime)) + b
-        return _decaycoef * self.signal[signalType][np.ix_(X,Y,[0])]
+    def updateSignalAll(self):
+        for signalType in self.signalColors.keys():
+            a = 0.005  # Larger -> faster
+            b = 0.0
+            dtime = self.time - self.signal[signalType][:,:,1]
+            _decaycoef = np.exp(-a * (dtime)) + b
+            self.signal[signalType][:,:,0] *= _decaycoef
 
     def getSignalAll(self, signalType):
-        a = 0.005  # Larger -> faster
-        b = 0.0
-        dtime = self.time - self.signal[signalType][:,:,1]
-        _decaycoef = np.exp(-a * (dtime)) + b
-        return _decaycoef * self.signal[signalType][:,:,0]
+        return self.signal[signalType][:,:,0]
+
+    def getSignalB(self, X, Y, signalType):
+        _idx = np.ix_(X,Y,[0])
+        return self.signal[signalType][_idx]

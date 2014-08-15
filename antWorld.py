@@ -48,6 +48,8 @@ while not antWorld.checkSuccess():  # the main game loop
     for ant in antWorld.ants:
         # pool.submit(ant)
         ant()
+    pool.submit(antWorld.land.updateSignalAll())
+    antWorld.land.updateSignalAll()
 
     SURFACE.blit(foodImg, (antWorld.food.x-15,antWorld.food.y-15))
 
