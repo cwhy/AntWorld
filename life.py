@@ -46,7 +46,7 @@ class LandElement(object):
     def updateSignal(self, signalType, amount=0):
         _x = self.x
         _y = self.y
-        self.land.signal[signalType][_x, _y, 0] = amount + self.getSignal(signalType)
+        self.land.signal[signalType][_x, _y, 0] += amount
         self.land.signal[signalType][_x, _y, 1] = self.land.time
 
     def getPosition(self):
@@ -138,6 +138,7 @@ class Ant(Animal):
     def __call__(self):
         self.patrol()
         self.leaveSignal()
+        self.antennaSignal()
 
     def detectSignalC(self):
         '''return the angle of a strong signal in front of the ant '''
@@ -154,17 +155,42 @@ class Ant(Animal):
                 maxSignal = signal
                 maxAngle = angle
             # print angle, signal
+        print maxSignal
         if maxSignal <= 0.1:
             return None
         else:
             #print "signal", maxSignal, "angle", maxAngle
             return maxAngle
 
+    def antennaSignal(self):
+        # Both antennae are about 1 radius(57.3degree)  and 5 pixel away
+        # Center for left antenna
+        _clx = int(self.x + cos(self.facingAngle - 1) * 7)
+        _cly = int(self.y + sin(self.facingAngle - 1) * 7)
+        # Center for right antenna
+        _crx = int(self.x + cos(self.facingAngle + 1) * 7)
+        _cry = int(self.y + sin(self.facingAngle + 1) * 7)
+
+        # Radius for detecting signal
+        _r = 7
+        lX = np.array(range(_clx-_r, _clx+_r + 1))
+        lY = np.array(range(_cly-_r, _cly+_r + 1))
+        _lCond = ((_clx - lX) ** 2 + (_cly - lY) ** 2 <= _r ** 2) * \
+            (lX < self.land.width - 1) * (lX > 0) * (lY < self.land.length - 1) * (lY > 0)
+        _left = np.sum(self.land.getSignalB(lX[_lCond], lY[_lCond], 'Ant'))
+
+        rX = np.array(range(_crx-_r, _crx+_r + 1))
+        rY = np.array(range(_cry-_r, _cry+_r + 1))
+        _rCond = ((_crx - rX) ** 2 + (_cry - rY) ** 2 <= _r ** 2) * \
+            (rX < self.land.width - 1) * (rX > 0) * (rY < self.land.length - 1) * (rY > 0)
+        _right = np.sum(self.land.getSignalB(rX[_rCond], rY[_rCond], 'Ant'))
+        print _left, _right
+
     def followSignal(self):
         '''follow the signal...'''
-        preferedSignal = self.detectSignalC()
-        if preferedSignal is not None:
-            turning_angle = preferedSignal - self.facingAngle
+        preferedAngle = self.detectSignalC()
+        if preferedAngle is not None:
+            turning_angle = preferedAngle - self.facingAngle
             self.move(turning_angle, self.speed)
             # print "following!"
         else:
@@ -252,7 +278,7 @@ class Land:
 
     def updateSignalAll(self):
         for signalType in self.signalColors.keys():
-            a = 0.005  # Larger -> faster
+            a = 0.001  # Larger -> faster
             b = 0.0
             dtime = self.time - self.signal[signalType][:,:,1]
             _decaycoef = np.exp(-a * (dtime)) + b

@@ -28,8 +28,8 @@ def drawAnts(ant):
 pool = ThreadPoolExecutor(3)
 pygame.init()
 fpsClock = pygame.time.Clock()  # setup clock
-antWorld = AntWorld(9, 500, 500)  # game model
-FPS = 10  # frames per second setting
+antWorld = AntWorld(1, 500, 500)  # game model
+FPS = 30  # frames per second setting
 
 # set up the window
 SURFACE = pygame.display.set_mode((antWorld.land.length, antWorld.land.width), DOUBLEBUF, 32)
